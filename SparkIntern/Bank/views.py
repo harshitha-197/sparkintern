@@ -49,7 +49,6 @@ def sendmoney(request):
     if request.method == "POST":
         form = transaction(request.POST)
         if form.is_valid():
-            form.save()
             toacc = request.POST.get('toaccount')
             fromacc = request.POST.get('fromaccount')
             amnt = request.POST.get('amount')
@@ -62,11 +61,15 @@ def sendmoney(request):
             else:
                 Sender = customerdata.objects.get(account_number=fromacc)
                 Receiver = customerdata.objects.get(account_number=toacc)
+                if Sender.balance < int(amnt):
+                    message = "Insufficient Funds"
+                    return render(request, 'sendmoney.html', {'form': form, 'message': message, 'signal': "danger"})
                 Sender.balance = Sender.balance - int(amnt)
                 Sender.save()
                 Receiver.balance = Receiver.balance + int(amnt)
                 Receiver.save()
                 message = "Transaction Success"
+                form.save()
                 form = transaction()
                 return render(request, 'sendmoney.html', {'form': form, 'message': message, 'signal': "success"})
         else:
